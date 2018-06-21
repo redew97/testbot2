@@ -5,7 +5,7 @@ var botID = process.env.BOT_ID;
 function respond() {
   var request = JSON.parse(this.req.chunks[0]),
       //botRegex = /^\Yo$/;
-      botRegex = /^(1|2)$/;
+      botRegex = /^(1|2|3|4|5|6)$/;
 
   console.log("request");
   if(request.text && botRegex.test(request.text)) {
@@ -22,7 +22,7 @@ function respond() {
 function postMessage() {
   var botResponse, options, body, botReq;
 
-  botResponse = "FUCK OFF";
+  botResponse = "FUCK OFF DICEBOT";
 
   options = {
     hostname: 'api.groupme.com',
