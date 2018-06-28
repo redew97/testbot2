@@ -1,57 +1,91 @@
-var HTTPS = require('https');
-var cool = require('cool-ascii-faces');
+var cmds = [cmdAtEveryone];
+var HTTPS  = require('https');
 
-var botID = process.env.BOT_ID;
+//exports
+exports.modName = "At Everyone";
 
-function respond() {
-  var request = JSON.parse(this.req.chunks[0]),
-      botRegex =  /c+.*o+.*o+.*l+ g+.*u+.*y+/i;
-
-  if(request.text && botRegex.test(request.text)) {
-    this.res.writeHead(200);
-    postMessage();
-    this.res.end();
-  } else {
-    console.log("don't care");
-    this.res.writeHead(200);
-    this.res.end();
+exports.checkCommands = function(dataHash, callback) {
+  for (cmd in cmds) {
+    var test = cmds[cmd](dataHash.request, dataHash.bots, dataHash.isMod, dataHash.owner, callback);
+    if (test)
+      return test;
   }
 }
 
-function postMessage() {
-  var botResponse, options, body, botReq;
+exports.getCmdListDescription = function () {
+  cmdArr = [
+    {cmd: "@everyone", desc: "Pings everyone in the current room. With great power comes great responsibility.", mod: true}
+  ];
 
-  botResponse = cool();
-
-  options = {
-    hostname: 'api.groupme.com',
-    path: '/v3/bots/post',
-    method: 'POST'
-  };
-
-  body = {
-    "bot_id" : botID,
-    "text" : botResponse
-  };
-
-  console.log('sending ' + botResponse + ' to ' + botID);
-
-  botReq = HTTPS.request(options, function(res) {
-      if(res.statusCode == 202) {
-        //neat
-      } else {
-        console.log('rejecting bad status code ' + res.statusCode);
-      }
-  });
-
-  botReq.on('error', function(err) {
-    console.log('error posting message '  + JSON.stringify(err));
-  });
-  botReq.on('timeout', function(err) {
-    console.log('timeout posting message '  + JSON.stringify(err));
-  });
-  botReq.end(JSON.stringify(body));
+  return cmdArr;
 }
 
+function cmdAtEveryone(request, bots, isMod, owner, callback) {
+  var regex = /@everyone/i;
+  var reqText = request.text;
 
-exports.respond = respond;
+  if (regex.test(reqText)){
+    var val = regex.exec(reqText);
+
+    if (!owner.access_token)
+      return;
+
+    if (!isMod) {
+      var msg = "You don't have permission to ping everyone";
+      callback(true, msg, []);
+      return msg;
+    }
+
+    getUserIDs(owner.access_token, request.group_id, function(userIDs, msg){
+      var attachments = [{
+        "loci": [],
+        "type": "mentions",
+        "user_ids": []
+      }];
+
+      var loci = [];
+      var user = [];
+
+      for(user in userIDs){
+        attachments[0]["loci"].push([24, request.name.length]);
+        attachments[0]["user_ids"].push(userIDs[user]);
+      }
+
+      var msg = "Hey everyone listen up! " + request.name + " has shared something important!";
+      callback(true, msg, attachments);
+    });
+
+    return msg;
+  }
+}
+
+function getUserIDs(ownerID, groupID, apiCallback) {
+  var options = {
+    hostname: 'api.groupme.com',
+    path: '/v3/groups?token=' + ownerID
+  };
+
+  callback = function(response) {
+    str = '';
+
+    response.on('data', function(chunk) {
+      str += chunk;
+    });
+
+    response.on('end', function() {
+      str = JSON.parse(str);
+      msg = str;
+      for (room in msg.response) {
+        if (msg.response[room].id == groupID){
+          var userIdArr = []
+          for(user in msg.response[room].members){
+            userIdArr.push(msg.response[room].members[user].user_id);
+          }
+          apiCallback(userIdArr);
+        }
+      }
+    });
+  };
+
+  HTTPS.request(options, callback).end();
+}
