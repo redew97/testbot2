@@ -1,24 +1,26 @@
 var cmds = [cmdAtEveryone];
 var HTTPS  = require('https');
 
+var botID = process.env.BOT_ID;
+
 //exports
-exports.modName = "At Everyone";
+//exports.modName = "At Everyone";
 
-exports.checkCommands = function(dataHash, callback) {
-  for (cmd in cmds) {
-    var test = cmds[cmd](dataHash.request, dataHash.bots, dataHash.isMod, dataHash.owner, callback);
-    if (test)
-      return test;
-  }
-}
+//exports.checkCommands = function(dataHash, callback) {
+ // for (cmd in cmds) {
+   // var test = cmds[cmd](dataHash.request, dataHash.bots, dataHash.isMod, dataHash.owner, callback);
+    //if (test)
+     // return test;
+  //}
+//}
 
-exports.getCmdListDescription = function () {
-  cmdArr = [
-    {cmd: "@everyone", desc: "Pings everyone in the current room. With great power comes great responsibility.", mod: true}
-  ];
+//exports.getCmdListDescription = function () {
+  //cmdArr = [
+    //{cmd: "@everyone", desc: "Pings everyone in the current room. With great power comes great responsibility.", mod: true}
+  //];
 
-  return cmdArr;
-}
+  //return cmdArr;
+//}
 
 function cmdAtEveryone(request, bots, isMod, owner, callback) {
   var regex = /@everyone/i;
